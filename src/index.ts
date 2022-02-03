@@ -2,13 +2,15 @@ import axios, { AxiosInstance } from 'axios';
 import { baseUrl, headers } from './utils';
 
 export class Surge {
+  options: Options;
   axios: AxiosInstance;
 
   /**
    *
    * @param {Object} options - Configuration object for the API
    */
-  constructor(options: Credentials) {
+  constructor(options: Options) {
+    this.options = options;
     this.axios = this.configure(options);
   }
 
@@ -16,7 +18,7 @@ export class Surge {
    *
    * @param {Object} options - Configuration object for the API
    */
-  configure(options: Credentials) {
+  configure(options: Options) {
     return axios.create({
       baseURL: baseUrl,
       headers,
