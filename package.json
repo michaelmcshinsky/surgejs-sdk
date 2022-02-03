@@ -32,7 +32,7 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "name": "surge-sdk",
+  "name": "surgejs-sdk",
   "author": "Michael McShinsky",
   "module": "dist/surgejs.esm.js",
   "size-limit": [
