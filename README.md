@@ -48,7 +48,10 @@ Logging the user into surge servers
 ```javascript
 const Surge = require('surgejs-sdk');
 
-const surge = new Surge('email@domain.com', 'password');
+const surge = new Surge({
+  username: 'email@domain.com',
+  password: 'password'
+});
 
 surge
   .login()
@@ -66,7 +69,7 @@ surge
 
 Every API must have Basic Authentication attached with user credentials. This is required for any call made to the servers.
 
-When using the surgejs-sdk library, all you need to do is provide your credentials in the `new Surge('email@domain.com', 'password)` arguments. No need to worry about http headers.
+When using the surgejs-sdk library, all you need to do is provide your credentials in the `new Surge({username: 'email@domain.com', password: 'password})` arguments. No need to worry about http headers.
 
 ### Methods
 
@@ -335,7 +338,7 @@ Content-Types: application/json
 Response
 
 ```json
-N/A
+N / A
 ```
 
 ##### Plans
@@ -362,7 +365,7 @@ Body
 Response
 
 ```json
-N/A
+N / A
 ```
 
 ##### Subscription

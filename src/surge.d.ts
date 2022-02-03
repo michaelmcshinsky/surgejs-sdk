@@ -1,4 +1,4 @@
-interface Credentials {
+interface Options {
   username: string;
   password: string;
 }
