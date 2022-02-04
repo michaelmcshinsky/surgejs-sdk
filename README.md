@@ -1,6 +1,11 @@
-# SurgeJS SDK
+<img src="logo.png" alt="Surge Logo"/>
+
+<br/>
+<br/>
 
 [![npm version](https://img.shields.io/npm/v/surgejs-sdk.svg?style=flat-square)](https://www.npmjs.org/package/surgejs-sdk) [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/surgejs-sdk/surgejs-sdk) [![install size](https://packagephobia.now.sh/badge?p=surgejs-sdk)](https://packagephobia.now.sh/result?p=surgejs-sdk)
+
+# SurgeJS SDK
 
 Unofficial compilation project of API endpoints found in the Surge Cli in order to bring some functionality into a structured and documented format.
 
