@@ -1,4 +1,4 @@
-<img src="logo.png" alt="Surge Logo"/>
+<img src="https://raw.githubusercontent.com/michaelmcshinsky/surgejs-sdk/main/logo.png" alt="Surge Logo"/>
 
 <br/>
 
