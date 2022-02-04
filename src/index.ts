@@ -25,11 +25,11 @@ export class Surge {
   init(options: Options) {
     this.options = options || {};
     if (this.options.username && this.options.password) {
-      if(!this.axios.defaults.auth) {
+      if (!this.axios.defaults.auth) {
         this.axios.defaults.auth = {
           username: this.options.username,
           password: this.options.password,
-        }
+        };
       } else {
         this.axios.defaults.auth.username = this.options.username;
         this.axios.defaults.auth.password = this.options.password;
@@ -47,6 +47,7 @@ export class Surge {
    */
   login = (username: string, password: string) => {
     if (username && password) {
+      this.init({ username, password });
       return axios.post<Login>(
         `${baseUrl}/token`,
         {},
@@ -60,6 +61,17 @@ export class Surge {
       );
     } else {
       return this.axios.post('/token');
+    }
+  };
+
+  /**
+   * Remove user details from the surge instance configuration.
+   */
+  logout = () => {
+    this.options = { username: '', password: '' };
+    if (this.axios.defaults.auth) {
+      this.axios.defaults.auth.username = '';
+      this.axios.defaults.auth.password = '';
     }
   };
 
