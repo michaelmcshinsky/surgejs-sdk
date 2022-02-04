@@ -75,13 +75,13 @@ export class Surge {
    * Request user account information.
    * @returns {Account} Account information about the user
    */
-  account = () => this.axios.post<Account>('/account');
+  account = () => this.axios.get<Account>('/account');
 
   /**
    * Request stats about user's usage on surge services.
    * @returns {Stat} Stat information about user's usage
    */
-  stats = () => this.axios.post<Stats>('/stats');
+  stats = () => this.axios.get<Stats>('/stats');
 
   /** PROJECTS */
 
