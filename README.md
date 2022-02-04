@@ -21,7 +21,7 @@ Unofficial compilation project of API endpoints found in the Surge Cli in order 
 
 ## Features
 
-- Common JS (CJS)
+- Common JS (CJS) enabled
 - ES Modules (ESM) enabled
 - TypeScript enabled
 
