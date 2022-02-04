@@ -10,7 +10,7 @@ export class Surge {
    * @param {Object} options - Configuration object for the API
    */
   constructor(options: Options) {
-    this.options = options;
+    this.options = options || {};
     this.axios = this.configure(options);
   }
 
@@ -19,11 +19,16 @@ export class Surge {
    * @param {Object} options - Configuration object for the API
    */
   configure(options: Options) {
-    return axios.create({
-      baseURL: baseUrl,
-      headers,
-      auth: { ...options },
-    });
+    this.options = options || {};
+    if (this.options.username && this.options.password) {
+      return axios.create({
+        baseURL: baseUrl,
+        headers,
+        auth: { ...this.options },
+      });
+    } else {
+      return axios;
+    }
   }
 
   /** AUTHENTICATION */
