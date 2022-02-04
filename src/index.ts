@@ -11,23 +11,29 @@ export class Surge {
    */
   constructor(options: Options) {
     this.options = options || {};
-    this.axios = this.configure(options);
+    this.axios = axios.create({
+      baseURL: baseUrl,
+      headers,
+      auth: { ...this.options },
+    });
   }
 
   /**
    *
    * @param {Object} options - Configuration object for the API
    */
-  configure(options: Options) {
+  init(options: Options) {
     this.options = options || {};
     if (this.options.username && this.options.password) {
-      return axios.create({
-        baseURL: baseUrl,
-        headers,
-        auth: { ...this.options },
-      });
-    } else {
-      return axios;
+      if(!this.axios.defaults.auth) {
+        this.axios.defaults.auth = {
+          username: this.options.username,
+          password: this.options.password,
+        }
+      } else {
+        this.axios.defaults.auth.username = this.options.username;
+        this.axios.defaults.auth.password = this.options.password;
+      }
     }
   }
 
