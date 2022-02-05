@@ -6,7 +6,7 @@
 
 # SurgeJS SDK
 
-Unofficial compilation project of API endpoints found in the Surge Cli in order to bring some functionality into a structured and documented format.
+JavaScript library of public Surge API endpoints. Sharing structure and documentation in an open sourc environment.
 
 ## Table of Contents
 
