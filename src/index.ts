@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestHeaders } from 'axios';
 import { baseUrl, headers } from './utils';
 
 export class Surge {
@@ -83,6 +83,8 @@ export class Surge {
   resetPassword = (email: string) =>
     this.axios.post<void>(`/token/reset/${email}`);
 
+  /** ACCOUNT */
+
   /**
    * Request user account information.
    * @returns {Account} Account information about the user
@@ -95,6 +97,8 @@ export class Surge {
    */
   stats = () => this.axios.get<Stats>('/stats');
 
+  cancel = () => this.axios.delete('/account');
+
   /** PROJECTS */
 
   /**
@@ -103,6 +107,65 @@ export class Surge {
    */
   list = () => this.axios.get<List[]>('/list');
 
+  /** TODO: data object, return object */
+  inviteCollaborators = (domain: string, data: any) => this.axios.post<any>(`/${domain}/collaborators`, data)
+
+  /** TODO: list interface combo users and domain, return object */
+  revokeCollaborators = (domain: string, emails: string[]) => this.axios.delete<any>(`/${domain}/collaborators`, { data: emails })
+
+  /** TODO: return object */
+  cacheBust = (domain: string) => this.axios.delete<any>(`/${domain}/cache`)
+
+  /** TODO: return object */
+  certs = (domain: string) => this.axios.get<any>(`/${domain}/certs`)
+  
+  /** TODO: return object */
+  dns = (domain: string) => this.axios.get<any>(`/${domain}/dns`)
+
+  /** TODO: data, return object */
+  dnsAdd = (domain: string, data:any) => this.axios.post<any>(`/${domain}/dns`, { data })
+
+  /** TODO: data, return object */
+  dnsRemove = (domain: string, id: string | number) => this.axios.delete<any>(`/${domain}/dns/${id}`)
+
+  /** TODO: return object */
+  zone = (domain: string) => this.axios.get<any>(`/${domain}/zone`)
+
+  /** TODO: return object */
+  zoneAdd = (domain: string, data: any) => this.axios.get<any>(`/${domain}/zone`, { data })
+  
+  /** TODO: data, return object */
+  zoneRemove = (domain: string, id: string | number) => this.axios.delete<any>(`/${domain}/zone/${id}`)
+
+  /**
+   * Update settings for a submitted domain.
+   * @param domain Domain to submit updated information for.
+   * @param data TDB
+   * @returns {Settings}
+   */
+  settings = (domain: string, data: any) => this.axios.put<Settings>(`/${domain}/settings`, { data })
+
+  /**
+   * Analytics details for a user's domain.
+   * @param domain Domain to request usage for.
+   * @returns {Analytics}
+   */
+  analytics = (domain: string) => this.axios.get<Analytics>(`/${domain}/analytics`)
+
+  /**
+   * Usage (Analytics) details for a user's domain.
+   * @param domain Domain to request usage for.
+   * @returns {Analytics}
+   */
+  usage = (domain: string) => this.axios.get<Analytics>(`/${domain}/usage`)
+
+  /**
+   * Audit details for a user's domain.
+   * @param domain Domain to request usage for.
+   * @returns {Usage} Return current revision, manifest, and certification details.
+   */
+  audit = (domain: string) => this.axios.get<Usage[]>(`/${domain}/audit`)
+
   /**
    * Deploy compressed files to surge for hosting live site.
    * @param {string} domain Domain name where site will be hosted.
@@ -110,7 +173,7 @@ export class Surge {
    * @returns {any} Under active development.
    */
   deploy = (domain: string, data: any) => {
-    const headers = {
+    const headers : AxiosRequestHeaders = {
       version: '',
       'file-count': '',
       cmd: '',
@@ -126,6 +189,18 @@ export class Surge {
    * @returns {Teardown}
    */
   teardown = (domain: string) => this.axios.delete<Teardown>(`/${domain}`);
+
+  /** SURGE */
+
+  /**
+   * Returns a list of Surge plans to choose from.
+   * @param domain Optional domain to get plan information about.
+   * @returns {Plans}
+   */
+   plans = (domain: string) => {
+    const resource = domain ? `/${domain}/plans` : 'plans';
+    return this.axios.get<Plans>(resource);
+  };
 }
 
 export default Surge;
