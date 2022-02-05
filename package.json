@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -33,6 +33,7 @@
     "trailingComma": "es5"
   },
   "name": "surgejs-sdk",
+  "description": "JavaScript library of public Surge API endpoints",
   "author": "Michael McShinsky",
   "module": "dist/surgejs.esm.js",
   "size-limit": [
