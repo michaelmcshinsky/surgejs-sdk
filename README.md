@@ -6,7 +6,7 @@
 
 # SurgeJS SDK
 
-JavaScript library of public Surge API endpoints. Sharing structure and documentation in an open sourc environment.
+JavaScript library of public Surge API endpoints. Sharing structure and documentation in an open source environment.
 
 ## Table of Contents
 
