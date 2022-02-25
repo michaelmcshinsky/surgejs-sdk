@@ -97,7 +97,7 @@ export class Surge {
    */
   stats = () => this.axios.get<Stats>('/stats');
 
-  cancel = () => this.axios.delete('/account');
+  cancel = () => this.axios.delete<any>('/account');
 
   /** PROJECTS */
 
