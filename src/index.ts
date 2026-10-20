@@ -1,206 +1,283 @@
-import axios, { AxiosInstance, AxiosRequestHeaders } from 'axios';
-import { baseUrl, headers } from './utils';
+import { SurgeClient } from './client';
+import type {
+  Account,
+  Analytics,
+  AuditResponse,
+  CacheBustResponse,
+  CertsResponse,
+  CollaboratorInvite,
+  CollaboratorResponse,
+  DeployResponse,
+  DnsAddInput,
+  DnsRecord,
+  DnsResponse,
+  Login,
+  Plans,
+  ProjectListEntry,
+  RequestOptions,
+  Settings,
+  Stats,
+  SurgeOptions,
+  Teardown,
+  ZoneAddInput,
+  ZoneRecord,
+  ZoneResponse,
+} from './types';
 
 export class Surge {
-  options: Options;
-  axios: AxiosInstance;
+  private client: SurgeClient;
 
-  /**
-   *
-   * @param {Object} options - Configuration object for the API
-   */
-  constructor(options: Options) {
-    this.options = options || {};
-    this.axios = axios.create({
-      baseURL: baseUrl,
-      headers,
-      auth: { ...this.options },
-    });
+  constructor(options: SurgeOptions = {}) {
+    this.client = new SurgeClient(options);
   }
 
-  /**
-   *
-   * @param {Object} options - Configuration object for the API
-   */
-  init(options: Options) {
-    this.options = options || {};
-    if (this.options.username && this.options.password) {
-      if (!this.axios.defaults.auth) {
-        this.axios.defaults.auth = {
-          username: this.options.username,
-          password: this.options.password,
-        };
-      } else {
-        this.axios.defaults.auth.username = this.options.username;
-        this.axios.defaults.auth.password = this.options.password;
-      }
-    }
+  init(options: SurgeOptions): void {
+    this.client.setCredentials(options);
   }
 
-  /** AUTHENTICATION */
+  logout(): void {
+    this.client.clearCredentials();
+  }
 
-  /**
-   *
-   * @param {string} username Name of user's email address.
-   * @param {string} password Password created with Surge services.
-   * @returns {Login}
-   */
-  login = (username: string, password: string) => {
+  getCredentials(): Readonly<SurgeOptions> {
+    return this.client.getCredentials();
+  }
+
+  async login(
+    username?: string,
+    password?: string,
+    options?: RequestOptions
+  ): Promise<Login> {
     if (username && password) {
-      this.init({ username, password });
-      return axios.post<Login>(
-        `${baseUrl}/token`,
-        {},
-        {
-          headers,
-          auth: {
-            username,
-            password,
-          },
-        }
-      );
-    } else {
-      return this.axios.post('/token');
+      this.client.setCredentials({ username, password });
     }
-  };
+    return this.client.request<Login>('POST', '/token', {}, undefined, options);
+  }
 
-  /**
-   * Remove user details from the surge instance configuration.
-   */
-  logout = () => {
-    this.options = { username: '', password: '' };
-    if (this.axios.defaults.auth) {
-      this.axios.defaults.auth.username = '';
-      this.axios.defaults.auth.password = '';
-    }
-  };
+  async resetPassword(email: string, options?: RequestOptions): Promise<void> {
+    await this.client.request<void>('POST', `/token/reset/${encodeURIComponent(email)}`, undefined, undefined, options);
+  }
 
-  /**
-   * Request intitiation of password reset for a given user.
-   * @param {string} email Email of user to send reset instructions.
-   * @returns {void}
-   */
-  resetPassword = (email: string) =>
-    this.axios.post<void>(`/token/reset/${email}`);
+  async account(options?: RequestOptions): Promise<Account> {
+    return this.client.request<Account>('GET', '/account', undefined, undefined, options);
+  }
 
-  /** ACCOUNT */
+  async stats(options?: RequestOptions): Promise<Stats> {
+    return this.client.request<Stats>('GET', '/stats', undefined, undefined, options);
+  }
 
-  /**
-   * Request user account information.
-   * @returns {Account} Account information about the user
-   */
-  account = () => this.axios.get<Account>('/account');
+  async cancel(options?: RequestOptions): Promise<unknown> {
+    return this.client.request<unknown>('DELETE', '/account', undefined, undefined, options);
+  }
 
-  /**
-   * Request stats about user's usage on surge services.
-   * @returns {Stat} Stat information about user's usage
-   */
-  stats = () => this.axios.get<Stats>('/stats');
+  async list(options?: RequestOptions): Promise<ProjectListEntry[]> {
+    return this.client.request<ProjectListEntry[]>('GET', '/list', undefined, undefined, options);
+  }
 
-  cancel = () => this.axios.delete<any>('/account');
+  async inviteCollaborators(
+    domain: string,
+    data: CollaboratorInvite | CollaboratorInvite[],
+    options?: RequestOptions
+  ): Promise<CollaboratorResponse> {
+    return this.client.request<CollaboratorResponse>(
+      'POST',
+      `/${encodeURIComponent(domain)}/collaborators`,
+      data,
+      undefined,
+      options
+    );
+  }
 
-  /** PROJECTS */
+  async revokeCollaborators(
+    domain: string,
+    emails: string[],
+    options?: RequestOptions
+  ): Promise<CollaboratorResponse> {
+    return this.client.request<CollaboratorResponse>(
+      'DELETE',
+      `/${encodeURIComponent(domain)}/collaborators`,
+      emails,
+      undefined,
+      options
+    );
+  }
 
-  /**
-   * Request list of user's live projects.
-   * @returns {List}
-   */
-  list = () => this.axios.get<List[]>('/list');
+  async cacheBust(domain: string, options?: RequestOptions): Promise<CacheBustResponse> {
+    return this.client.request<CacheBustResponse>(
+      'DELETE',
+      `/${encodeURIComponent(domain)}/cache`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: data object, return object */
-  inviteCollaborators = (domain: string, data: any) => this.axios.post<any>(`/${domain}/collaborators`, data)
+  async certs(domain: string, options?: RequestOptions): Promise<CertsResponse> {
+    return this.client.request<CertsResponse>(
+      'GET',
+      `/${encodeURIComponent(domain)}/certs`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: list interface combo users and domain, return object */
-  revokeCollaborators = (domain: string, emails: string[]) => this.axios.delete<any>(`/${domain}/collaborators`, { data: emails })
+  async dns(domain: string, options?: RequestOptions): Promise<DnsResponse> {
+    return this.client.request<DnsResponse>(
+      'GET',
+      `/${encodeURIComponent(domain)}/dns`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: return object */
-  cacheBust = (domain: string) => this.axios.delete<any>(`/${domain}/cache`)
+  async dnsAdd(domain: string, data: DnsAddInput, options?: RequestOptions): Promise<DnsResponse> {
+    return this.client.request<DnsResponse>(
+      'POST',
+      `/${encodeURIComponent(domain)}/dns`,
+      data,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: return object */
-  certs = (domain: string) => this.axios.get<any>(`/${domain}/certs`)
-  
-  /** TODO: return object */
-  dns = (domain: string) => this.axios.get<any>(`/${domain}/dns`)
+  async dnsRemove(
+    domain: string,
+    id: string | number,
+    options?: RequestOptions
+  ): Promise<DnsResponse> {
+    return this.client.request<DnsResponse>(
+      'DELETE',
+      `/${encodeURIComponent(domain)}/dns/${encodeURIComponent(String(id))}`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: data, return object */
-  dnsAdd = (domain: string, data:any) => this.axios.post<any>(`/${domain}/dns`, { data })
+  async zone(domain: string, options?: RequestOptions): Promise<ZoneResponse> {
+    return this.client.request<ZoneResponse>(
+      'GET',
+      `/${encodeURIComponent(domain)}/zone`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: data, return object */
-  dnsRemove = (domain: string, id: string | number) => this.axios.delete<any>(`/${domain}/dns/${id}`)
+  async zoneAdd(domain: string, data: ZoneAddInput, options?: RequestOptions): Promise<ZoneResponse> {
+    return this.client.request<ZoneResponse>(
+      'POST',
+      `/${encodeURIComponent(domain)}/zone`,
+      data,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: return object */
-  zone = (domain: string) => this.axios.get<any>(`/${domain}/zone`)
+  async zoneRemove(
+    domain: string,
+    id: string | number,
+    options?: RequestOptions
+  ): Promise<ZoneResponse> {
+    return this.client.request<ZoneResponse>(
+      'DELETE',
+      `/${encodeURIComponent(domain)}/zone/${encodeURIComponent(String(id))}`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** TODO: return object */
-  zoneAdd = (domain: string, data: any) => this.axios.get<any>(`/${domain}/zone`, { data })
-  
-  /** TODO: data, return object */
-  zoneRemove = (domain: string, id: string | number) => this.axios.delete<any>(`/${domain}/zone/${id}`)
+  async settings(domain: string, data: Partial<Settings>, options?: RequestOptions): Promise<Settings> {
+    return this.client.request<Settings>(
+      'PUT',
+      `/${encodeURIComponent(domain)}/settings`,
+      data,
+      undefined,
+      options
+    );
+  }
 
-  /**
-   * Update settings for a submitted domain.
-   * @param domain Domain to submit updated information for.
-   * @param data TDB
-   * @returns {Settings}
-   */
-  settings = (domain: string, data: any) => this.axios.put<Settings>(`/${domain}/settings`, { data })
+  async analytics(domain: string, options?: RequestOptions): Promise<Analytics> {
+    return this.client.request<Analytics>(
+      'GET',
+      `/${encodeURIComponent(domain)}/analytics`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /**
-   * Analytics details for a user's domain.
-   * @param domain Domain to request usage for.
-   * @returns {Analytics}
-   */
-  analytics = (domain: string) => this.axios.get<Analytics>(`/${domain}/analytics`)
+  async usage(domain: string, options?: RequestOptions): Promise<Analytics> {
+    return this.client.request<Analytics>(
+      'GET',
+      `/${encodeURIComponent(domain)}/usage`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /**
-   * Usage (Analytics) details for a user's domain.
-   * @param domain Domain to request usage for.
-   * @returns {Analytics}
-   */
-  usage = (domain: string) => this.axios.get<Analytics>(`/${domain}/usage`)
+  async audit(domain: string, options?: RequestOptions): Promise<AuditResponse> {
+    return this.client.request<AuditResponse>(
+      'GET',
+      `/${encodeURIComponent(domain)}/audit`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /**
-   * Audit details for a user's domain.
-   * @param domain Domain to request usage for.
-   * @returns {Usage} Return current revision, manifest, and certification details.
-   */
-  audit = (domain: string) => this.axios.get<Usage[]>(`/${domain}/audit`)
-
-  /**
-   * Deploy compressed files to surge for hosting live site.
-   * @param {string} domain Domain name where site will be hosted.
-   * @param {any} data Compressed site data to be hosted. Must include index.html.
-   * @returns {any} Under active development.
-   */
-  deploy = (domain: string, data: any) => {
-    const headers : AxiosRequestHeaders = {
-      version: '',
-      'file-count': '',
-      cmd: '',
-      'project-size': '',
-      timestamp: new Date().toJSON(0),
+  async deploy(
+    domain: string,
+    data: unknown,
+    deployMeta: { version: string; fileCount: number; cmd: string; projectSize: number },
+    options?: RequestOptions
+  ): Promise<DeployResponse> {
+    const headers = {
+      version: deployMeta.version,
+      'file-count': String(deployMeta.fileCount),
+      cmd: deployMeta.cmd,
+      'project-size': String(deployMeta.projectSize),
+      timestamp: new Date().toISOString(),
     };
-    return this.axios.put<any>(`/${domain}`, data, { headers });
-  };
+    return this.client.request<DeployResponse>(
+      'PUT',
+      `/${encodeURIComponent(domain)}`,
+      data,
+      headers,
+      options
+    );
+  }
 
-  /**
-   * Remove site and domain from surge services.
-   * @param {string} domain Name of user's domain to be removed.
-   * @returns {Teardown}
-   */
-  teardown = (domain: string) => this.axios.delete<Teardown>(`/${domain}`);
+  async teardown(domain: string, options?: RequestOptions): Promise<Teardown> {
+    return this.client.request<Teardown>(
+      'DELETE',
+      `/${encodeURIComponent(domain)}`,
+      undefined,
+      undefined,
+      options
+    );
+  }
 
-  /** SURGE */
+  async plans(domain?: string, options?: RequestOptions): Promise<Plans> {
+    const path = domain ? `/${encodeURIComponent(domain)}/plans` : '/plans';
+    return this.client.request<Plans>('GET', path, undefined, undefined, options);
+  }
 
-  /**
-   * Returns a list of Surge plans to choose from.
-   * @param domain Optional domain to get plan information about.
-   * @returns {Plans}
-   */
-   plans = (domain: string) => {
-    const resource = domain ? `/${domain}/plans` : 'plans';
-    return this.axios.get<Plans>(resource);
-  };
+  async getDnsRecords(domain: string, options?: RequestOptions): Promise<DnsRecord[]> {
+    const result = await this.dns(domain, options);
+    return Array.isArray(result) ? result : Object.values(result).flat();
+  }
+
+  async getZoneRecords(domain: string, options?: RequestOptions): Promise<ZoneRecord[]> {
+    const result = await this.zone(domain, options);
+    return Array.isArray(result) ? result : Object.values(result).flat();
+  }
 }
 
 export default Surge;
+export { SurgeClient, SurgeApiError, BASE_URL } from './client';
+export type * from './types';

@@ -1,63 +1,61 @@
 {
-  "version": "0.4.1",
+  "name": "surgejs-sdk",
+  "version": "1.0.0",
+  "description": "Typed TypeScript API client for Surge.sh public endpoints",
+  "author": "Michael McShinsky",
   "license": "MIT",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "repository": "https://github.com/michaelmcshinsky/surgejs-sdk",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
+  "sideEffects": false,
   "engines": {
-    "node": ">=10"
+    "node": ">=18"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src test",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "docs:build": "typedoc src/index.ts"
+    "docs:build": "typedoc src/index.ts",
+    "release": "changeset publish",
+    "version": "changeset version"
   },
-  "peerDependencies": {},
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^11.1.6",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "msw": "^2.7.0",
+    "size-limit": "^11.1.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^5.0.5"
   },
-  "prettier": {
-    "printWidth": 80,
-    "semi": true,
-    "singleQuote": true,
-    "trailingComma": "es5"
-  },
-  "name": "surgejs-sdk",
-  "description": "JavaScript library of public Surge API endpoints",
-  "author": "Michael McShinsky",
-  "module": "dist/surgejs.esm.js",
   "size-limit": [
     {
-      "path": "dist/surgejs.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/surgejs.esm.js",
-      "limit": "10 KB"
+      "path": "dist/index.js",
+      "limit": "8 KB"
     }
   ],
-  "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.5",
-    "@types/axios": "^0.14.0",
-    "@types/node": "^17.0.14",
-    "husky": "^7.0.4",
-    "size-limit": "^7.0.5",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typedoc": "^0.22.11",
-    "typescript": "^4.5.5"
-  },
-  "dependencies": {
-    "axios": "^0.25.0"
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.27.7": true,
+    "msw@2.15.0": true
   }
 }
