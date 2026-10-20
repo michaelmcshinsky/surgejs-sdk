@@ -50,7 +50,7 @@
     "@size-limit/preset-small-lib": "^7.0.5",
     "@types/axios": "^0.14.0",
     "@types/node": "^17.0.14",
-    "husky": "^7.0.4",
+    "husky": "^9.1.7",
     "size-limit": "^7.0.5",
     "tsdx": "^0.14.1",
     "tslib": "^2.3.1",
