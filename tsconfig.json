@@ -1,21 +1,23 @@
 {
-  "include": ["src", "test"],
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2022"],
+    "module": "Node16",
+    "moduleResolution": "Node16",
     "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "isolatedDeclarations": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "noEmit": true
-  }
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "include": ["src", "test"],
+  "exclude": ["dist", "node_modules"]
 }

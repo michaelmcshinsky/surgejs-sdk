@@ -1,61 +1,90 @@
 {
   "name": "surgejs-sdk",
   "version": "1.0.0",
-  "description": "Typed TypeScript API client for Surge.sh public endpoints",
-  "author": "Michael McShinsky",
+  "description": "Modern TypeScript SDK for the Surge.sh static publishing platform — full API client with streaming publish, upload dedupe, and end-to-end types.",
   "license": "MIT",
-  "repository": "https://github.com/michaelmcshinsky/surgejs-sdk",
+  "author": "Michael McShinsky",
   "type": "module",
+  "engines": {
+    "node": ">=18.13"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./stream": {
+      "import": {
+        "types": "./dist/stream/index.d.ts",
+        "default": "./dist/stream/index.js"
+      },
+      "require": {
+        "types": "./dist/stream/index.d.cts",
+        "default": "./dist/stream/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "logo.png"
   ],
   "sideEffects": false,
-  "engines": {
-    "node": ">=18"
-  },
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src test",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint src test",
-    "size": "size-limit",
-    "analyze": "size-limit --why",
-    "docs:build": "typedoc src/index.ts",
-    "release": "changeset publish",
-    "version": "changeset version"
+    "test:coverage": "vitest run --coverage",
+    "publint": "publint",
+    "attw": "attw --pack . --profile node16",
+    "check": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm build && pnpm publint && pnpm attw",
+    "release": "changeset publish"
+  },
+  "dependencies": {
+    "ignore": "^7.0.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaelmcshinsky/surgejs-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/michaelmcshinsky/surgejs-sdk/issues"
+  },
+  "homepage": "https://github.com/michaelmcshinsky/surgejs-sdk#readme",
+  "keywords": [
+    "surge",
+    "surge.sh",
+    "deploy",
+    "static",
+    "hosting",
+    "cdn",
+    "publish",
+    "sdk"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^11.1.6",
-    "@types/node": "^22.10.2",
-    "eslint": "^9.17.0",
-    "msw": "^2.7.0",
-    "size-limit": "^11.1.6",
-    "tsup": "^8.3.5",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.18.0",
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
+    "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "oxlint": "^1.89.0",
+    "publint": "^0.3.25",
+    "tsdown": "^0.23.1",
+    "typescript": "^5.9.3",
     "vitest": "^5.0.5"
-  },
-  "size-limit": [
-    {
-      "path": "dist/index.js",
-      "limit": "8 KB"
-    }
-  ],
-  "allowScripts": {
-    "esbuild@0.25.12": true,
-    "esbuild@0.27.7": true,
-    "msw@2.15.0": true
   }
 }
