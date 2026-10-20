@@ -1,398 +1,104 @@
-<img src="https://raw.githubusercontent.com/michaelmcshinsky/surgejs-sdk/main/logo.png" alt="Surge Logo"/>
+# surgejs-sdk
 
-<br/>
+Typed TypeScript API client for [Surge.sh](https://surge.sh) public endpoints.
 
-[![npm version](https://img.shields.io/npm/v/surgejs-sdk.svg?style=flat-square)](https://www.npmjs.org/package/surgejs-sdk) [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/surgejs-sdk/surgejs-sdk) [![install size](https://packagephobia.now.sh/badge?p=surgejs-sdk)](https://packagephobia.now.sh/result?p=surgejs-sdk)
+Zero runtime dependencies — built on native `fetch`.
 
-# SurgeJS SDK
-
-JavaScript library of public Surge API endpoints. Sharing structure and documentation in an open source environment.
-
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Example](#example)
-- [Methods](#methods)
-  - [Authentication](#authentication)
-  - [Projects](#projects)
-  - [Payments](#payments)
-- [Support](#support)
-
-## Features
-
-- Common JS (CJS) enabled
-- ES Modules (ESM) enabled
-- TypeScript enabled
-
-## Installation
-
-Using npm:
+## Install
 
 ```bash
 npm install surgejs-sdk
 ```
 
-Using yarn:
+Requires Node.js 18+ (or any runtime with `fetch` and `btoa`).
 
-```bash
-yarn add surgejs-sdk
+## Usage
+
+```ts
+import { Surge } from 'surgejs-sdk';
+
+const surge = new Surge();
+
+await surge.login('you@example.com', 'password');
+
+const account = await surge.account();
+const projects = await surge.list();
+
+// DNS management
+const records = await surge.getDnsRecords('myapp.surge.sh');
+await surge.dnsAdd('myapp.surge.sh', { type: 'A', name: '@', value: '1.2.3.4' });
 ```
 
-## Example
+### Credentials
 
-<b>note: CommonJS usage</b>
-
-```javascript
-const Surge = require('surgejs-sdk');
+```ts
+const surge = new Surge({ username: 'you@example.com', password: 'password' });
+// or later
+surge.init({ username: 'you@example.com', password: 'password' });
+surge.logout();
 ```
 
-Logging the user into surge servers
+### Error handling
 
-```javascript
-const Surge = require('surgejs-sdk');
+All requests throw `SurgeApiError` on non-2xx responses:
 
-const surge = new Surge({
-  username: 'email@domain.com',
-  password: 'password'
-});
+```ts
+import { Surge, SurgeApiError } from 'surgejs-sdk';
 
-surge
-  .login()
-  .then(function(response) {
-    // handle success
-    console.log(response);
-  })
-  .catch(function(error) {
-    // handle error
-    console.log(error);
-  });
-```
-
-## API
-
-Every API must have Basic Authentication attached with user credentials. This is required for any call made to the servers.
-
-When using the surgejs-sdk library, all you need to do is provide your credentials in the `new Surge({username: 'email@domain.com', password: 'password})` arguments. No need to worry about http headers.
-
-### Methods
-
-All provided methods are promise based so we won't add `.then(...).catch(...)` to all of the examples.
-
-#### Authentication
-
-- [Login](#login)
-- [Logout](#logout)
-- [Account](#account)
-- [Reset Password](#reset-password)
-- [Stats](#stats)
-
-##### Login
-
-Authenticate the user with surge servers using their email and password provided upon initiation of the library. See [Installation](#installation)
-
-```javascript
-surge.login();
-```
-
-Response
-
-```json
-{
-  "email": "email@domain.com",
-  "token": "abcdefg0123456789"
-}
-```
-
-##### Logout
-
-Logout is an informal event. Remove your locally stored credentials (email, token) to "logout" the user.
-
-##### Account
-
-Get the user's account information.
-
-```javascript
-surge.account();
-```
-
-Response
-
-```json
-{
-  "email": "email@domain.com",
-  "id": "0000-0000-0000",
-  "uuid": "00000000-0000-0000-0000-000000000000",
-  "role": 0,
-  "updated_at": "2020-01-01T01:01:01.000Z",
-  "created_at": "2020-01-01T01:01:01.000Z",
-  "email_verified_at": "2020-01-01T01:01:01.000Z",
-  "payment_id": null,
-  "plan": {
-    "id": "abcdefg-00",
-    "name": "abcdefg",
-    "amount": "0000",
-    "friendly": "abcdefg",
-    "dummy": true,
-    "current": true,
-    "metadata": {
-      "type": "account"
-    },
-    "ext": "00",
-    "perks": [],
-    "comped": false
-  },
-  "card": null
-}
-```
-
-##### Reset Password
-
-Initiate password reset steps for a user's email.
-
-```javascript
-surge.resetPassword('email@domain.com');
-```
-
-Response
-
-```
-Reset instructions send to email.
-```
-
-##### Stats
-
-Get stats about your account usage.
-
-```javascript
-surge.stats();
-```
-
-Response
-
-```json
-{
-  "calls": "7515855",
-  "deployemnts": "7515855",
-  "bytes": "77879308777468",
-  "files": "903079863",
-  "accounts": "148665",
-  "projects": "1193327",
-  "builds": "1169",
-  "deployments": "7515855",
-  "formatted": {
-    "calls": "7,515,855",
-    "deployments": "7,515,855",
-    "bytes": "70.83 TB",
-    "files": "903,079,863",
-    "accounts": "148,665",
-    "projects": "1,193,327",
-    "builds": "1,169"
+try {
+  await surge.account();
+} catch (error) {
+  if (error instanceof SurgeApiError) {
+    console.error(error.status, error.message, error.body);
   }
 }
 ```
 
-#### Projects
+### Cancellation
 
-- [Discover](#discover)
-- [List](#list)
-- [Deploy](#deploy)
-- [Teardown](#teardown)
+Every method accepts an optional `RequestOptions` with an `AbortSignal`:
 
-##### Discover
-
-Surge Cli uses [moniker](https://www.npmjs.com/package/moniker) to randomly generate domain name for the user.
-
-```javascript
-surge.discover();
+```ts
+const controller = new AbortController();
+surge.list({ signal: controller.signal });
+controller.abort();
 ```
 
-##### List
+## API
 
-```javascript
-surge.list();
-```
+| Method | Description |
+| --- | --- |
+| `login(username?, password?)` | Authenticate; returns `{ email, token }` |
+| `logout()` | Clear stored credentials |
+| `account()` | User account details |
+| `stats()` | Usage statistics |
+| `list()` | Live projects |
+| `dns(domain)` / `dnsAdd` / `dnsRemove` | DNS record management |
+| `getDnsRecords(domain)` | DNS records flattened to an array |
+| `zone(domain)` / `zoneAdd` / `zoneRemove` | Zone record management |
+| `certs(domain)` | TLS certificates |
+| `settings(domain, data)` | Domain settings |
+| `analytics(domain)` / `usage(domain)` | Traffic analytics |
+| `audit(domain)` | Revision, manifest, and cert details |
+| `deploy(domain, data, meta)` | Upload a site |
+| `teardown(domain)` | Remove a site |
+| `plans(domain?)` | Available plans |
+| `inviteCollaborators` / `revokeCollaborators` | Collaborator management |
+| `cacheBust(domain)` | Purge cache |
 
-Response
-
-```json
-[
-    {
-    "domain": "domain_name.surge.sh",
-    "planName": "Standard",
-    "output": {},
-    "rev": 0123456789,
-    "config": {},
-    "cmd": "surge",
-    "email": "email@domain.com",
-    "platform": "surge.sh",
-    "cliVersion": "0.21.7",
-    "message": null,
-    "buildTime": null,
-    "ip": "00.000.000.00",
-    "privateFileList": [],
-    "publicFileCount": 00,
-    "publicTotalSize": 000000,
-    "privateFileCount": 00,
-    "privateTotalSize": 0000000,
-    "uploadStartTime": 0000000000000,
-    "uploadEndTime": 0000000000000,
-    "uploadDuration": 1.000,
-    "preview": "0000000000000-domain_name.surge.sh",
-    "timeAgoInWords": "4 weeks ago"
-  },
-  ...
-]
-```
-
-##### Deploy
-
-Not yet implemented.
-
-```
-PUT https://surge.surge.sh/<domain_name>
-Content-Types: application/json
-```
-
-| Parameters | Type     | Default | Description                                                                        |
-| ---------- | -------- | ------- | ---------------------------------------------------------------------------------- |
-| domain     | `string` | N/A     | `domain_name`.surge.sh which you would like to create. Do not include ".surge.sh". |
-| data       | `gzip`   | N/A     | Tar packed, gzip files including the index.html to serve your static site.         |
-
-Project is ran through three pipes in the cli:
-
-```node
-// cli files:
-// 1. prep.js
-// 2. deploy.js
-// 3. project.js
-
-var fsReader = require('surge-fstream-ignore');
-
-// Read Project
-var project = fsReader({ path: req.project, ignoreFiles: ['.surgeignore'] });
-
-// we always ignore .git directory
-project.addIgnoreRules(ignore);
-
-// chain all this together...
-project
-  .pipe(tar.Pack())
-  .pipe(zlib.Gzip())
-  .pipe(handshake);
-```
-
-Untested libraries equivalent to Node:
-
-- Tar - [tar-js](https://github.com/beatgammit/tar-js)
-- GZip - [gzip-js](https://github.com/beatgammit/gzip-js)
-
-##### Teardown
-
-Remove the domain and hosted site from surge servers. e.g. `domain_name.surge.sh`.
-
-```javascript
-surge.teardown('domain_name');
-```
-
-Response
-
-```json
-{
-  "msg": "project removed",
-  "nsDomain": "surge.world",
-  "regions": {},
-  "servers": []
-}
-```
-
-#### Payments
-
-- [Card](#card)
-- [Set Card](#set-card)
-- [Payment](#payment)
-- [Plans](#plans)
-- [Subscribe](#subscribe)
-- [Subscription](#subscription)
-
-**Payments are still under development.**
-
-##### Card
-
-N/A
-
-##### Set Card
-
-N/A
-
-##### Payment
-
-Multi step process.
-
-1. If the user does not exist in stripe, choose a plan and credit card information.
-2. If the user exists in stripe, choose a new plan to pay for.
-
-+++ Request
+## Development
 
 ```bash
-GET https://surge.surge.sh/<domain_name>/plans
-Content-Types: application/json
+npm install
+npm run test
+npm run build
 ```
 
-Response
+## Releasing
 
-```json
-N / A
-```
+Releases are automated with [Changesets](https://github.com/changesets/changesets).
+Merge a release PR from the `changeset` GitHub Action to publish to npm.
 
-##### Plans
+## License
 
-N/A
-
-##### Plus
-
-Requires an undocumented Stripe call to get user's Stripe data.
-
-##### Subscribe
-
-```bash
-PUT https://surge.surge.sh/<domain_name>/plan
-Content-Types: application/json
-```
-
-Body
-
-| Parameter | Type     | Default | Description   |
-| --------- | -------- | ------- | ------------- |
-| token     | `string` | N/A     | Payment Token |
-
-Response
-
-```json
-N / A
-```
-
-##### Subscription
-
-```bash
-GET https://surge.surge.sh/<domain_name>/subscription
-Content-Types: application/json
-```
-
-Response
-
-```json
-{
-  "type": "",
-  "stripe_pk": "",
-  "plan": {},
-  "card": null,
-  "perks": []
-}
-```
-
-## Support
-
-Technical support questions are best asked in the [Discussions](https://github.com/michaelmcshinsky/surgejs-sdk/discussions). We will do our best to assist as soon as possible.
-
-If you find a defect or would like to submit a feature request, please create an [Issue](https://github.com/michaelmcshinsky/surgejs-sdk/issues) and we will investigate right away.
+MIT
