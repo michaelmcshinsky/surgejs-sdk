@@ -32,10 +32,13 @@ importers:
         version: 0.3.25
       tsdown:
         specifier: ^0.23.1
-        version: 0.23.1(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(typescript@5.9.3)
+        version: 0.23.1(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(typescript@5.9.3)(unrun@0.3.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      unrun:
+        specifier: ^0.3.1
+        version: 0.3.1
       vitest:
         specifier: ^5.0.5
         version: 5.0.5(@types/node@22.20.5)(@vitest/coverage-v8@5.0.5)(vite@8.3.4(@types/node@22.20.5)(yaml@2.9.1))
@@ -1039,6 +1042,16 @@ packages:
     resolution: {integrity: sha512-yLSH4py7oFH3oG/9K+XWrz1pSi3dfUrWEnInbxMfArOfc1+33BlGPQtLsOYwvdMy11AwUBetYuaRxSPqgkq+8g==}
     engines: {node: '>=4'}
 
+  unrun@0.3.1:
+    resolution: {integrity: sha512-onIck/oNnCaytwths1ZVp1LK2Gq2hPoyFhiHebObuUXqR3S0uHuLLaBK8K6mRRgV7Ptip8AnNvaUsgzwWwBZuA==}
+    engines: {node: ^22.13.0 || >=24.0.0}
+    hasBin: true
+    peerDependencies:
+      synckit: ^0.11.11
+    peerDependenciesMeta:
+      synckit:
+        optional: true
+
   validate-npm-package-name@5.0.1:
     resolution: {integrity: sha512-OljLrQ9SQdOUqTaQxqL5dEfZWrXExyyWsozYlAWFawPVNuD83igl7uJD2RTkNMbniIYgt8l81eCJGIdQF7avLQ==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -1945,7 +1958,7 @@ snapshots:
 
   tree-kill@1.2.2: {}
 
-  tsdown@0.23.1(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(typescript@5.9.3):
+  tsdown@0.23.1(@arethetypeswrong/core@0.18.5)(publint@0.3.25)(typescript@5.9.3)(unrun@0.3.1):
     dependencies:
       cac: 7.1.0
       defu: 6.1.7
@@ -1965,6 +1978,7 @@ snapshots:
       '@arethetypeswrong/core': 0.18.5
       publint: 0.3.25
       typescript: 5.9.3
+      unrun: 0.3.1
     transitivePeerDependencies:
       - '@typescript/native-preview'
       - '@volar/typescript'
@@ -1984,6 +1998,10 @@ snapshots:
   undici-types@6.21.0: {}
 
   unicode-emoji-modifier-base@1.0.0: {}
+
+  unrun@0.3.1:
+    dependencies:
+      rolldown: 1.2.14
 
   validate-npm-package-name@5.0.1: {}
 
