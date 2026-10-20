@@ -85,6 +85,7 @@
     "publint": "^0.3.25",
     "tsdown": "^0.23.1",
     "typescript": "^5.9.3",
+    "unrun": "^0.3.1",
     "vitest": "^5.0.5"
   }
 }
