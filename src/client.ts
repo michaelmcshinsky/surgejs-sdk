@@ -1,95 +1,172 @@
-import type { RequestOptions, SurgeOptions } from './types';
+import type { ClientOptions } from './types/client.js'
+import type { Credentials, PlatformStats } from './types/index.js'
+import type { PublishOptions, StreamOptions } from './types/stream.js'
+import type { StreamHandle } from './stream/handle.js'
+import { RequestContext } from './core/context.js'
+import {
+  AccountResource,
+  AuthResource,
+  TokensResource,
+} from './resources/account.js'
+import { ProjectsResource } from './resources/projects.js'
+import {
+  CollaboratorsResource,
+  DnsResource,
+  SettingsResource,
+  ZoneResource,
+} from './resources/dns.js'
+import { AnalyticsResource } from './resources/analytics.js'
+import { BillingResource } from './resources/billing.js'
+import { encrypt, ssl } from './stream/certs.js'
+import { publish } from './stream/publish.js'
 
-export const BASE_URL = 'https://surge.surge.sh';
+/**
+ * The Surge API client. One instance holds an endpoint, credentials, and
+ * transport configuration; every call resolves credentials in this order:
+ *
+ * 1. per-call override (`withCredentials` or a method's options),
+ * 2. the client's `token` / `email`+`password`,
+ * 3. the `SURGE_TOKEN` environment variable.
+ */
+export class SurgeClient {
+  readonly account: AccountResource
+  readonly auth: AuthResource
+  readonly tokens: TokensResource
+  readonly projects: ProjectsResource
+  readonly dns: DnsResource
+  readonly zone: ZoneResource
+  readonly collaborators: CollaboratorsResource
+  readonly settings: SettingsResource
+  readonly analytics: AnalyticsResource
+  readonly billing: BillingResource
 
-export class SurgeApiError extends Error {
-  readonly status: number;
-  readonly body: unknown;
+  readonly #ctx: RequestContext
+  readonly #options: ClientOptions
 
-  constructor(message: string, status: number, body: unknown) {
-    super(message);
-    this.name = 'SurgeApiError';
-    this.status = status;
-    this.body = body;
+  constructor(options: ClientOptions = {}) {
+    this.#options = options
+    this.#ctx = new RequestContext(options)
+    this.account = new AccountResource(this.#ctx)
+    this.auth = new AuthResource(this.#ctx)
+    this.tokens = new TokensResource(this.#ctx)
+    this.projects = new ProjectsResource(this.#ctx)
+    this.dns = new DnsResource(this.#ctx)
+    this.zone = new ZoneResource(this.#ctx)
+    this.collaborators = new CollaboratorsResource(this.#ctx)
+    this.settings = new SettingsResource(this.#ctx)
+    this.analytics = new AnalyticsResource(this.#ctx)
+    this.billing = new BillingResource(this.#ctx)
+  }
+
+  /** The resolved base URL of the API this client talks to. */
+  get endpoint(): string {
+    return this.#ctx.endpoint
+  }
+
+  /**
+   * A cloned client that uses the given credentials for every call.
+   * The original client is untouched — ideal for tools managing several
+   * Surge accounts.
+   */
+  withCredentials(credentials: Credentials): SurgeClient {
+    const opts: ClientOptions = {
+      ...this.#options,
+      token: undefined,
+      email: undefined,
+      password: undefined,
+    }
+    if (typeof credentials === 'string') {
+      opts.token = credentials
+    } else {
+      // `{ user: "token", pass }` and email+password both ride the same
+      // fields: token auth is Basic auth with the literal username "token"
+      opts.email = credentials.username ?? credentials.user
+      opts.password = credentials.password ?? credentials.pass
+    }
+    return new SurgeClient(opts)
+  }
+
+  /** GET /stats — public platform statistics. No auth required. */
+  stats(): Promise<PlatformStats> {
+    return this.account.stats()
+  }
+
+  /**
+   * Publish a directory (or a single HTML file) to a domain.
+   *
+   * Files are gathered (respecting `.surgeignore`), packed into a gzipped
+   * tarball, and streamed to the API; the response is live NDJSON progress.
+   * Upload dedupe ("carry") is used automatically for projects ≥ 1 MB.
+   */
+  publish(
+    projectPath: string,
+    domain: string,
+    options: PublishOptions = {},
+  ): StreamHandle {
+    return publish(
+      {
+        endpoint: this.#ctx.endpoint,
+        credentials: this.#ctx.credentialsFor(options.creds),
+        sdkVersion: this.#ctx.sdkVersion,
+        userAgent: this.#ctx.userAgent,
+        fetchImpl: this.#ctx.fetchImpl,
+      },
+      projectPath,
+      domain,
+      options,
+    )
+  }
+
+  /** PUT /:domain/encrypt — provision a managed SSL certificate. */
+  encrypt(domain: string, options: StreamOptions = {}): StreamHandle {
+    return encrypt(
+      {
+        endpoint: this.#ctx.endpoint,
+        credentials: this.#ctx.credentialsFor(options.creds),
+        sdkVersion: this.#ctx.sdkVersion,
+        userAgent: this.#ctx.userAgent,
+        fetchImpl: this.#ctx.fetchImpl,
+      },
+      domain,
+      options,
+    )
+  }
+
+  /** PUT /:domain/ssl — upload a custom PEM bundle (paid plans). */
+  ssl(
+    pemPath: string,
+    domain: string,
+    options: StreamOptions = {},
+  ): StreamHandle {
+    return ssl(
+      {
+        endpoint: this.#ctx.endpoint,
+        credentials: this.#ctx.credentialsFor(options.creds),
+        sdkVersion: this.#ctx.sdkVersion,
+        userAgent: this.#ctx.userAgent,
+        fetchImpl: this.#ctx.fetchImpl,
+      },
+      pemPath,
+      domain,
+      options,
+    )
   }
 }
 
-export class SurgeClient {
-  private baseUrl: string;
-  private options: SurgeOptions;
-
-  constructor(options: SurgeOptions = {}, baseUrl: string = BASE_URL) {
-    this.options = { ...options };
-    this.baseUrl = baseUrl;
-  }
-
-  setCredentials(options: SurgeOptions): void {
-    this.options = { ...options };
-  }
-
-  clearCredentials(): void {
-    this.options = {};
-  }
-
-  getCredentials(): Readonly<SurgeOptions> {
-    return { ...this.options };
-  }
-
-  private buildAuthHeader(): string | undefined {
-    const { username, password } = this.options;
-    if (!username || !password) return undefined;
-    return `Basic ${btoa(`${username}:${password}`)}`;
-  }
-
-  private buildHeaders(extra?: Record<string, string>): Record<string, string> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...extra,
-    };
-    const auth = this.buildAuthHeader();
-    if (auth) headers['Authorization'] = auth;
-    return headers;
-  }
-
-  async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-    extraHeaders?: Record<string, string>,
-    options?: RequestOptions
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`;
-    const init: RequestInit = {
-      method,
-      headers: this.buildHeaders(extraHeaders),
-      signal: options?.signal,
-    };
-
-    if (body !== undefined && method !== 'GET' && method !== 'DELETE') {
-      init.body = JSON.stringify(body);
-    } else if (body !== undefined && method === 'DELETE') {
-      init.body = JSON.stringify(body);
-    }
-
-    const response = await fetch(url, init);
-    const text = await response.text();
-    let parsed: unknown = undefined;
-    if (text) {
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        parsed = text;
-      }
-    }
-
-    if (!response.ok) {
-      const message =
-        typeof parsed === 'object' && parsed !== null && 'message' in parsed
-          ? String((parsed as { message: unknown }).message)
-          : `Surge API request failed with status ${response.status}`;
-      throw new SurgeApiError(message, response.status, parsed);
-    }
-
-    return parsed as T;
-  }
+/**
+ * Create a Surge API client.
+ *
+ * ```ts
+ * import { createClient } from 'surgejs-sdk'
+ *
+ * const client = createClient({ token: process.env.SURGE_TOKEN })
+ * const projects = await client.projects.list()
+ * const handle = client.publish('./dist', 'my-site.surge.sh', {
+ *   message: 'ci deploy',
+ * })
+ * await handle.completed
+ * ```
+ */
+export function createClient(options: ClientOptions = {}): SurgeClient {
+  return new SurgeClient(options)
 }

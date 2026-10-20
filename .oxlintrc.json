@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["dist", "node_modules", "coverage", "*.config.ts"],
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "eslint/no-unused-vars": "error"
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "unicorn/no-array-sort": "off"
+      }
+    }
+  ]
+}
