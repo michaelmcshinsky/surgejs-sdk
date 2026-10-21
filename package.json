@@ -41,6 +41,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
+    "prepack": "pnpm build",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src test",

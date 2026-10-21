@@ -32,3 +32,21 @@ jobs:
         run: pnpm publint
       - if: matrix.node-version == 22
         run: pnpm attw
+
+  # The published engines claim node >= 18.13, but oxlint/tsdown (dev-only
+  # tooling) need >= 22. This job verifies the runtime claim itself on the
+  # floor version: the SDK code and test suite, no lint/build toolchain.
+  runtime-compat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm vitest run

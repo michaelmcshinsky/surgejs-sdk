@@ -1,0 +1,12 @@
+# Normalize every text file to LF in the repository AND in working trees,
+# regardless of the committer's platform. npm pack reads the working tree:
+# CRLF drift there makes published tarballs differ byte-for-byte from a
+# `git archive` of the same tag (reproducible-pack hygiene).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.gz binary
+*.tgz binary
