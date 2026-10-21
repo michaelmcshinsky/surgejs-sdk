@@ -47,8 +47,8 @@ Version 1.0 is a complete rewrite: modern tooling, the full Surge API surface, s
 - Project settings including `private` (require sign-in for the whole domain)
 - Platform helpers: `SURGE_DNS`, `PROJECT_LIMITS`, `PUBLISH_RATE_LIMITS`, `limitViolation`, `previewUrl`, `isValidDomain`, `readCname`/`writeCname`
 - `withCredentials()` for multi-account tools
-- Dual ESM/CJS builds, Node ≥ 18.13, zero config
+- Dual ESM/CJS builds, Node ≥ 22.18, zero config
 
 ## Runtime requirements
 
-0.x claimed `node >= 10`. 1.x requires **Node ≥ 18.13** (native fetch), matching the official Surge CLI/SDK.
+0.x claimed `node >= 10`. 1.x requires **Node ≥ 22.18** (native fetch; both 18 and 20 are past end-of-life, and the verified floor matches the CI matrix).

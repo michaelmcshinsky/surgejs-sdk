@@ -1,5 +1,22 @@
 # surgejs-sdk
 
+## 1.0.1
+
+Release-engineering fixes from the post-publish audit; no API changes.
+
+- **Engines floor raised to `node >= 22.18`.** 1.0.0 claimed >= 18.13; the
+  floor is now the lowest version CI actually verifies (22/24 matrix). Both
+  18 and 20 are past end-of-life, and the current vitest toolchain cannot
+  boot on 18 (`util.styleText`, Node >= 20.12)
+- Published tarballs are now byte-reproducible from a `git archive` of the
+  tag: `.gitattributes` forces LF in working trees (`npm pack` reads the
+  working tree, so Windows `core.autocrlf` had been shipping CRLF copies of
+  package.json/README)
+- `prepack` builds before packing/publishing so a release can never ship
+  without `dist/`
+- Dependabot ignores semver-major `@types/node` bumps (types track the
+  supported runtimes)
+
 ## 1.0.0
 
 Complete rewrite as a modern TypeScript SDK.
