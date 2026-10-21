@@ -1,12 +1,12 @@
 {
   "name": "surgejs-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Modern TypeScript SDK for the Surge.sh static publishing platform — full API client with streaming publish, upload dedupe, and end-to-end types.",
   "license": "MIT",
   "author": "Michael McShinsky",
   "type": "module",
   "engines": {
-    "node": ">=18.13"
+    "node": ">=22.18.0"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
