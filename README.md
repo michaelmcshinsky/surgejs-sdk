@@ -8,7 +8,7 @@ Modern TypeScript SDK for the [Surge.sh](https://surge.sh) static publishing pla
 - **Streaming publish** — gzipped USTAR tarball streamed to `PUT /:domain`, live NDJSON progress, upload dedupe (“carry”), symlinks, `.surgeignore`, single-file projects
 - **Async/await first** — every JSON method returns a typed promise; streams are event emitters *and* promises *and* async iterables
 - **Typed errors** — `SurgeAuthError`, `SurgeRateLimitError`, … carrying the server’s `messages`/`details` and status
-- **Zero runtime deps** beyond `ignore` — native `fetch`, Node ≥ 18.13, dual ESM + CJS
+- **Zero runtime deps** beyond `ignore` — native `fetch`, Node ≥ 22.18, dual ESM + CJS
 
 ```
 npm install surgejs-sdk
@@ -227,7 +227,7 @@ Mint scoped, labeled tokens with the CLI (`surge tokens add --domain example.com
 
 ## Requirements
 
-- Node.js ≥ 18.13 (native `fetch`)
+- Node.js ≥ 22.18 (native `fetch`; both 18 and 20 are past end-of-life)
 - TypeScript ≥ 5.0 recommended for consumers (types use modern syntax)
 
 ## Migrating from 0.x

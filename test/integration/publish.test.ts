@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { gunzipSync } from 'node:zlib'
 import { join } from 'node:path'
-import { createClient } from '../../src/index.js'
+import { createClient, SDK_VERSION } from '../../src/index.js'
 import type { DeployInfo, StreamEvent } from '../../src/types/index.js'
 import { MockFetch, json, ndjson, ndjsonChunked } from '../helpers/mock-fetch.js'
 import { TempProject } from '../helpers/temp-project.js'
@@ -44,7 +44,7 @@ describe('publish', () => {
       expect(req.headers['file-count']).toBe('1')
       expect(Number(req.headers['project-size'])).toBeGreaterThan(0)
       expect(req.headers['message']).toBe('ship it')
-      expect(req.headers['version']).toBe('1.0.0')
+      expect(req.headers['version']).toBe(SDK_VERSION)
       expect(req.headers['authorization']).toBe(
         `Basic ${Buffer.from(`token:${TOKEN}`).toString('base64')}`,
       )
