@@ -2,17 +2,38 @@
 
 # surgejs-sdk
 
+[![npm version](https://img.shields.io/npm/v/surgejs-sdk?style=flat-square&logo=npm)](https://www.npmjs.com/package/surgejs-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/surgejs-sdk?style=flat-square&logo=npm)](https://www.npmjs.com/package/surgejs-sdk)
+[![CI](https://img.shields.io/github/actions/workflow/status/michaelmcshinsky/surgejs-sdk/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/michaelmcshinsky/surgejs-sdk/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Node](https://img.shields.io/badge/node-%E2%89%A522.18-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
 Modern TypeScript SDK for the [Surge.sh](https://surge.sh) static publishing platform — the complete HTTP API as namespaced, async, fully-typed resources, plus a streaming publisher with upload dedupe.
 
 - **Full API surface** — accounts, tokens, projects, revisions, DNS/zone, collaborators, settings, analytics, billing (~45 endpoints)
-- **Streaming publish** — gzipped USTAR tarball streamed to `PUT /:domain`, live NDJSON progress, upload dedupe (“carry”), symlinks, `.surgeignore`, single-file projects
+- **Streaming publish** — gzipped USTAR tarball streamed to `PUT /:domain`, live NDJSON progress, upload dedupe ("carry"), symlinks, `.surgeignore`, single-file projects
 - **Async/await first** — every JSON method returns a typed promise; streams are event emitters *and* promises *and* async iterables
-- **Typed errors** — `SurgeAuthError`, `SurgeRateLimitError`, … carrying the server’s `messages`/`details` and status
+- **Typed errors** — `SurgeAuthError`, `SurgeRateLimitError`, … carrying the server's `messages`/`details` and status
 - **Zero runtime deps** beyond `ignore` — native `fetch`, Node ≥ 22.18, dual ESM + CJS
 
-```
+```bash
 npm install surgejs-sdk
 ```
+
+## When to Use This Over the Surge CLI
+
+| Scenario | CLI | **surgejs-sdk** |
+|----------|-----|-----------------|
+| One-off `surge ./dist site.com` | ✅ Simple | ⚠️ Overkill |
+| Custom deploy logic (staging gates, multi-domain, rollback) | ❌ Shell + parsing | ✅ Typed, composable |
+| CI/CD with scoped tokens & error handling | ⚠️ Exit-code checks | ✅ Typed errors, programmatic auth |
+| Integrating Surge into a Node tool/dashboard | ❌ Child-process hacks | ✅ Native async/await |
+| Progress bars, NDJSON parsing, upload dedupe control | ❌ Hard-coded | ✅ Events, async iteration |
+| Managing DNS, collaborators, billing programmatically | ❌ Not covered | ✅ Full API surface |
+| Embedding in serverless / edge functions | ❌ Spawning a CLI | ✅ Native `fetch`, zero deps |
+
+**Rule of thumb:** CLI for humans deploying once; SDK for code that deploys repeatedly or needs control.
 
 ## Quick start
 
@@ -208,22 +229,254 @@ try {
 }
 ```
 
-## CI usage
+## CI Usage
+
+### GitHub Actions
 
 ```yaml
-- run: npm ci && npm run build
-- run: npx surgejs-cli ./dist example.com   # or use this SDK directly
-  env:
-    SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+name: Deploy to Surge
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to Surge
+        run: |
+          cat > deploy.mjs << 'EOF'
+          import { createClient } from 'surgejs-sdk'
+          const client = createClient()
+          const info = await client.publish('./dist', process.env.SURGE_DOMAIN, {
+            message: `ci deploy — ${process.env.GITHUB_SHA}`,
+            force: 'https',
+          })
+          console.log(`Live at ${info.urls[0]}`)
+          EOF
+          node deploy.mjs
+        env:
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          SURGE_DOMAIN: ${{ vars.SURGE_DOMAIN }}
+```
+
+### GitLab CI
+
+```yaml
+deploy:surge:
+  stage: deploy
+  image: node:22
+  script:
+    - npm ci
+    - npm run build
+    - |
+      node -e "
+        import('surgejs-sdk').then(async ({ createClient }) => {
+          const client = createClient()
+          const info = await client.publish('./dist', '$SURGE_DOMAIN', {
+            message: 'gitlab-ci deploy',
+          })
+          console.log('Live at', info.urls[0])
+        })
+      "
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  variables:
+    SURGE_DOMAIN: your-site.surge.sh
+```
+
+### CircleCI
+
+```yaml
+version: 2.1
+jobs:
+  deploy:
+    docker:
+      - image: cimg/node:22.18
+    steps:
+      - checkout
+      - restore_cache:
+          keys: [deps-{{ checksum "package-lock.json" }}]
+      - run: npm ci
+      - save_cache:
+          key: deps-{{ checksum "package-lock.json" }}
+          paths: [node_modules]
+      - run: npm run build
+      - run: |
+          cat > deploy.mjs << 'EOF'
+          import { createClient } from 'surgejs-sdk'
+          const client = createClient()
+          const info = await client.publish('./dist', process.env.SURGE_DOMAIN, {
+            message: 'circleci deploy',
+          })
+          console.log(`Live at ${info.urls[0]}`)
+          EOF
+          node deploy.mjs
+        environment:
+          SURGE_DOMAIN: your-site.surge.sh
+workflows:
+  deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only: main
+```
+
+### Minting a Scoped CI Token
+
+Never use your main Surge password in CI. Mint a scoped, labeled token:
+
+```bash
+# CLI — creates a token that can only publish to one domain
+surge tokens add --domain example.com -m "github-actions-ci"
+# → prints SURGE_TOKEN value; store as a CI secret
+```
+
+Scoped tokens limit blast radius if a CI secret leaks.
+
+## Tutorial: Building a Custom Surge Deployer
+
+This walks through a production-grade deploy script that handles staging gates, multi-domain rollback, and structured logging.
+
+### Step 1 — Install and Configure
+
+```bash
+npm install surgejs-sdk
 ```
 
 ```ts
-// in a deploy script
-const client = createClient() // reads SURGE_TOKEN
-await client.publish('./dist', process.env['DOMAIN']!).completed
+// deploy.ts
+import { createClient, SurgePermissionError, SurgeRateLimitError } from 'surgejs-sdk'
+
+const client = createClient({
+  token: process.env.SURGE_TOKEN,
+  onStatus: {
+    429: (err) => console.warn(`Rate limited: ${err.message}`),
+  },
+})
 ```
 
-Mint scoped, labeled tokens with the CLI (`surge tokens add --domain example.com -m ci`) so a leaked CI secret can publish to one domain only.
+### Step 2 — Staging Preview Before Production
+
+```ts
+async function deployWithStagingGate(buildDir: string, prodDomain: string) {
+  // 1. Publish a staging preview first
+  const stagingDomain = `${prodDomain.replace('.com', '')}-preview.surge.sh`
+  const staging = await client.publish(buildDir, stagingDomain, {
+    message: 'staging preview',
+    stage: true,
+  })
+  console.log(`Staging: ${staging.urls[0]}`)
+
+  // 2. Run smoke tests against the staging URL
+  const passed = await runSmokeTests(staging.urls[0]!)
+  if (!passed) {
+    console.error('Smoke tests failed — aborting production deploy')
+    process.exit(1)
+  }
+
+  // 3. Promote to production
+  const prod = await client.publish(buildDir, prodDomain, {
+    message: 'promoted to production',
+    force: 'https',
+  })
+  console.log(`Production: ${prod.urls[0]}`)
+}
+```
+
+### Step 3 — Multi-Domain Deploy with Rollback Safety
+
+```ts
+async function deployMultiDomain(buildDir: string, domains: string[]) {
+  const results = await Promise.allSettled(
+    domains.map(async (domain) => {
+      // Record current revision before deploying
+      const revisions = await client.projects.revisions(domain)
+      const currentRev = revisions[0]?.rev
+
+      try {
+        const info = await client.publish(buildDir, domain, { message: 'multi-domain deploy' })
+        return { domain, rev: info.rev, previousRev: currentRev }
+      } catch (err) {
+        // Rollback the successful ones if this one fails
+        if (currentRev) {
+          await client.projects.rollback(domain)
+          console.warn(`Rolled back ${domain} to ${currentRev}`)
+        }
+        throw err
+      }
+    })
+  )
+
+  const failed = results.filter((r) => r.status === 'rejected')
+  if (failed.length > 0) {
+    console.error(`${failed.length}/${domains.length} domains failed`)
+    process.exit(1)
+  }
+}
+```
+
+### Step 4 — Rate Limit Handling & Retries
+
+```ts
+async function publishWithRetry(
+  buildDir: string,
+  domain: string,
+  maxRetries = 3,
+) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await client.publish(buildDir, domain).completed
+    } catch (err) {
+      if (err instanceof SurgeRateLimitError) {
+        const waitMs = Math.min(2 ** attempt * 1000, 30_000)
+        console.warn(`Rate limited, waiting ${waitMs}ms (attempt ${attempt})`)
+        await new Promise((r) => setTimeout(r, waitMs))
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error(`Failed after ${maxRetries} attempts`)
+}
+```
+
+### Step 5 — Put It Together
+
+```ts
+async function main() {
+  const buildDir = './dist'
+  const domain = process.env.SURGE_DOMAIN!
+
+  try {
+    const info = await publishWithRetry(buildDir, domain)
+    console.log(`✅ Deployed: ${info.urls.join(', ')}`)
+  } catch (err) {
+    if (err instanceof SurgePermissionError) {
+      console.error('Permission denied — check SURGE_TOKEN scope:', err.messages)
+    } else {
+      console.error('Deploy failed:', err)
+    }
+    process.exit(1)
+  }
+}
+
+main()
+```
+
+**Key takeaways:**
+- Use `Promise.allSettled` for multi-domain deploys so one failure doesn't hide others
+- Record revisions before deploying for safe rollback
+- `SurgeRateLimitError` is typed — handle it explicitly, don't catch-all
+- Scope tokens per domain (`surge tokens add --domain`) for CI safety
 
 ## Requirements
 
