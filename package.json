@@ -11,6 +11,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "surgejs": "./dist/cli/index.js"
+  },
   "exports": {
     ".": {
       "import": {
@@ -69,10 +72,15 @@
     "surge.sh",
     "deploy",
     "static",
+    "static-site",
     "hosting",
     "cdn",
     "publish",
-    "sdk"
+    "sdk",
+    "typescript",
+    "api-client",
+    "cli",
+    "ci-cd"
   ],
   "publishConfig": {
     "access": "public"
