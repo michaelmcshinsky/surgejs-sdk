@@ -11,7 +11,7 @@ const config = defineConfig({
       // type-only modules emit no runtime code; version.ts is asserted
       // against package.json by its own test but is a one-line constant
       exclude: ['src/types/**', 'src/version.ts'],
-      reporter: ['text-summary', 'json-summary'],
+      reporter: ['text-summary', 'json-summary', 'html'],
       thresholds: {
         lines: 98,
         functions: 98,
