@@ -1,0 +1,79 @@
+name: Surge Deploy
+description: Publish a directory or single HTML file to Surge.sh with surgejs-sdk
+
+branding:
+  icon: upload-cloud
+  color: orange
+
+inputs:
+  domain:
+    description: Target domain, for example my-site.surge.sh
+    required: true
+  token:
+    description: Surge token. Store it as a repository secret.
+    required: true
+  path:
+    description: Directory or single HTML file to publish
+    required: false
+    default: "."
+  message:
+    description: Revision message shown in the project history
+    required: false
+    default: ""
+  stage:
+    description: Publish a preview under this name instead of production
+    required: false
+    default: ""
+  force:
+    description: Force http or https for the project
+    required: false
+    default: ""
+  private:
+    description: Require sign-in for the whole domain ("true" or "false")
+    required: false
+    default: "false"
+  version:
+    description: surgejs-sdk version range to install
+    required: false
+    default: "^1.1.0"
+
+outputs:
+  urls:
+    description: JSON array of the deployed URLs
+    value: ${{ steps.publish.outputs.urls }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install surgejs
+      shell: bash
+      env:
+        SDK_RANGE: ${{ inputs.version }}
+      run: npm install --global "surgejs-sdk@${SDK_RANGE}"
+
+    - name: Publish
+      id: publish
+      shell: bash
+      env:
+        SURGE_TOKEN: ${{ inputs.token }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_DOMAIN: ${{ inputs.domain }}
+        INPUT_MESSAGE: ${{ inputs.message }}
+        INPUT_STAGE: ${{ inputs.stage }}
+        INPUT_FORCE: ${{ inputs.force }}
+        INPUT_PRIVATE: ${{ inputs.private }}
+      run: |
+        set -euo pipefail
+
+        args=(publish "$INPUT_PATH" "$INPUT_DOMAIN")
+        if [ -n "${INPUT_MESSAGE}" ]; then args+=(--message "$INPUT_MESSAGE"); fi
+        if [ -n "${INPUT_STAGE}" ]; then args+=(--stage "$INPUT_STAGE"); fi
+        if [ -n "${INPUT_FORCE}" ]; then args+=(--force "$INPUT_FORCE"); fi
+        if [ "${INPUT_PRIVATE}" = "true" ]; then args+=(--private); fi
+
+        # URLs go to stdout, progress to stderr, so the capture stays clean.
+        urls="$(surgejs "${args[@]}")"
+        echo "$urls"
+
+        json="$(printf '%s\n' "$urls" | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+        echo "urls=${json}" >> "$GITHUB_OUTPUT"
