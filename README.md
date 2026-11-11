@@ -5,6 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/surgejs-sdk?style=flat-square&logo=npm)](https://www.npmjs.com/package/surgejs-sdk)
 [![npm downloads](https://img.shields.io/npm/dm/surgejs-sdk?style=flat-square&logo=npm)](https://www.npmjs.com/package/surgejs-sdk)
 [![CI](https://img.shields.io/github/actions/workflow/status/michaelmcshinsky/surgejs-sdk/ci.yml?branch=main&style=flat-square&label=CI)](https://github.com/michaelmcshinsky/surgejs-sdk/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/badge/coverage-%E2%89%A598%25-brightgreen?style=flat-square&label=coverage)](https://github.com/michaelmcshinsky/surgejs-sdk/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Node](https://img.shields.io/badge/node-%E2%89%A522.18-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
@@ -34,6 +35,30 @@ npm install surgejs-sdk
 | Embedding in serverless / edge functions | ❌ Spawning a CLI | ✅ Native `fetch`, zero deps |
 
 **Rule of thumb:** CLI for humans deploying once; SDK for code that deploys repeatedly or needs control.
+
+## Compared to the official Surge packages
+
+Surge ships two packages that power its own CLI: [`surge-sdk`](https://www.npmjs.com/package/surge-sdk) (the HTTP API client) and [`surge-stream`](https://www.npmjs.com/package/surge-stream) (the tarball upload stream). Both are maintained by Surge's author and both are mature. If you want the lowest-risk dependency and do not need types or ESM, use them.
+
+| | `surge-sdk` + `surge-stream` | **surgejs-sdk** |
+|---|---|---|
+| Published version | 0.34.0 | 1.x (stable) |
+| Maintained by | Surge's author | community |
+| TypeScript types | none shipped | first-class, strict |
+| Module format | CommonJS only | dual ESM + CJS with declarations |
+| Packages to install | 2 | 1 |
+| Runtime dependencies | `split`, `ignore`, `surge-ignore`, … | `ignore` |
+| Publish API | stream object, callbacks | events **and** promise **and** async iterable |
+| Upload dedupe | internal to the stream | exposed as a `carry` frame you can observe |
+| Errors | strings / generic `Error` | typed hierarchy with server `messages`/`details` |
+| Node floor | ≥ 18.13 | ≥ 22.18 |
+| Live installs (last month) | ~133k each | 171 |
+
+**Choose the official packages when** you need the longest track record, you are on Node 18/20, or you are already deep in the CLI's internals.
+
+**Choose surgejs-sdk when** you want types without `@types` guesswork, ESM, one dependency, a publish you can `await` or `for await`, or errors you can branch on.
+
+Honest caveat: the official packages carry ~780× the install volume. They are the reference implementation; this one is the typed, modernized alternative.
 
 ## Quick start
 
@@ -497,3 +522,7 @@ pnpm check   # typecheck + lint + test + build + publint + attw
 ## License
 
 MIT © Michael McShinsky
+
+---
+
+Built by [Michael McShinsky](https://mcshinsky.net). The rewrite rationale and architecture decisions are written up at [mcshinsky.net/work](https://mcshinsky.net/work/).
