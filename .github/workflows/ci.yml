@@ -29,6 +29,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test:coverage
+      - name: Summarize coverage
+        if: matrix.node-version == 22
+        run: node scripts/coverage-summary.mjs
+      - name: Upload coverage report
+        if: matrix.node-version == 22
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 14
       - run: pnpm build
       # packaging validators only need to run once
       - if: matrix.node-version == 22
