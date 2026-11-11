@@ -16,6 +16,7 @@ Modern TypeScript SDK for the [Surge.sh](https://surge.sh) static publishing pla
 - **Streaming publish** — gzipped USTAR tarball streamed to `PUT /:domain`, live NDJSON progress, upload dedupe ("carry"), symlinks, `.surgeignore`, single-file projects
 - **Async/await first** — every JSON method returns a typed promise; streams are event emitters *and* promises *and* async iterables
 - **Typed errors** — `SurgeAuthError`, `SurgeRateLimitError`, … carrying the server's `messages`/`details` and status
+- **CLI and GitHub Action included** — `surgejs publish`, `list`, `teardown`, `whoami`, plus a composite action with typed inputs
 - **Zero runtime deps** beyond `ignore` — native `fetch`, Node ≥ 22.18, dual ESM + CJS
 
 ```bash
@@ -87,6 +88,62 @@ const { token } = await client.auth.login('you@example.com', 'password')
 ```
 
 Signing in with an unknown email **creates the account** — same behavior as the CLI.
+
+## CLI
+
+The package ships a small CLI for the flows that do not need code. It is deliberately thin: publish, list, teardown, whoami.
+
+```bash
+npx surgejs-sdk publish ./dist my-site.surge.sh
+npx surgejs-sdk publish ./dist my-site.surge.sh --message "release 2.4.0"
+npx surgejs-sdk publish ./dist my-site.surge.sh --stage qa --private
+npx surgejs-sdk list
+npx surgejs-sdk teardown old-site.surge.sh --yes
+```
+
+| Command | Does |
+|---|---|
+| `publish [path] <domain>` | Streams a deploy, prints the live URLs |
+| `list` | Every project on the account, aligned columns |
+| `teardown <domain> --yes` | Removes the project and all revisions |
+| `whoami` | Account email, plan, verification state |
+
+Global flags: `--token <token>` (defaults to `$SURGE_TOKEN`), `--endpoint <url>`, `--help`, `--version`.
+
+Design notes:
+
+- stdout carries results only; progress, messages, and server CTAs go to stderr, so `urls=$(surgejs publish ...)` stays clean in scripts.
+- Unknown flags fail with exit code 2 instead of being ignored, because the next thing that happens is a production deploy.
+- `teardown` refuses to run without `--yes`.
+- Anything beyond these four commands belongs in the client, where it can be typed and awaited.
+
+## GitHub Action
+
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run build
+      - uses: michaelmcshinsky/surgejs-sdk@v1
+        id: surge
+        with:
+          domain: my-site.surge.sh
+          token: ${{ secrets.SURGE_TOKEN }}
+          path: ./dist
+          message: "deploy ${{ github.sha }}"
+      - run: echo "Live at ${{ steps.surge.outputs.urls }}"
+```
+
+Inputs: `domain` and `token` (required); `path`, `message`, `stage`, `force`, `private`, `version`. Output: `urls` as a JSON array.
+
+The action installs `surgejs-sdk` from npm and shells out to the CLI, so it needs no build step of its own.
 
 ## The client
 
