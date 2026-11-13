@@ -10,7 +10,12 @@ const config = defineConfig({
       include: ['src/**/*.ts'],
       // type-only modules emit no runtime code; version.ts is asserted
       // against package.json by its own test but is a one-line constant
-      exclude: ['src/types/**', 'src/version.ts'],
+      exclude: [
+        'src/types/**',
+        'src/version.ts',
+        // the executable shim: shebang plus one call into cli/run.ts
+        'src/cli/index.ts',
+      ],
       reporter: ['text-summary', 'json-summary', 'html'],
       thresholds: {
         lines: 98,
