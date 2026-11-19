@@ -25,8 +25,8 @@ describe('action.yml', () => {
     // npm only had <=1.0.0 -- `npm install -g surgejs-sdk@^1.1.0` failed with
     // ETARGET, and the action ships inside the package it installs.
     const match = actionYml.match(/version:\n(?:.*\n)*?\s+default: "([^"]+)"/)
-    expect(match, 'version input default not found in action.yml').not.toBeNull()
-    const range = match![1]
+    const range = match?.[1]
+    if (!range) throw new Error('version input default not found in action.yml')
 
     const base = range.replace(/^[\^~>=<\s]+/, '')
     expect(cmp(base, pkg.version), `default range ${range} requires > ${pkg.version}`).toBeLessThanOrEqual(0)
