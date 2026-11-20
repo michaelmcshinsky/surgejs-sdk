@@ -6,9 +6,8 @@ updates:
       interval: weekly
     open-pull-requests-limit: 10
     ignore:
-      # @types/node should track the runtimes this package supports (the
-      # engines floor is 18; CI verifies 18 and tests on 22/24). Major
-      # jumps risk typing against APIs those runtimes don't have.
+      # @types/node should track the engines floor (>=22.18.0). Major
+      # jumps risk typing against APIs newer runtimes don't have.
       - dependency-name: "@types/node"
         update-types:
           - version-update:semver-major
