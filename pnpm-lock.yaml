@@ -10,7 +10,7 @@ importers:
     dependencies:
       ignore:
         specifier: ^7.0.13
-        version: 7.0.14
+        version: 7.0.16
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -898,8 +898,8 @@ packages:
     resolution: {integrity: sha512-Z+8unD6em/MJwyrkWQ2M3wygRGI1+MztbutiNwk1DCuEPXOZRWGjtcMPZYP1exY9iNZMhd7ZOSMQSo9WYtiQRw==}
     hasBin: true
 
-  ignore@7.0.14:
-    resolution: {integrity: sha512-wCBiZ77u1tuWde6G/nfOtLaCTYcFDU5yCzARzK10y+rLhzYoL7a7yEemcopcc2Mzow7gZOIjnV2ym1NYmdiJOQ==}
+  ignore@7.0.16:
+    resolution: {integrity: sha512-52N+Y4HRMOJmbLmr+DqO4iSRyyB7N52gm7PWCT6h0p978+oKbqHCB7gIJIwZvBUsjlSdWbrBFqUSmIFNZMpn0A==}
     engines: {node: '>= 4'}
 
   import-meta-resolve@4.2.0:
@@ -2022,7 +2022,7 @@ snapshots:
 
   human-id@4.2.2: {}
 
-  ignore@7.0.14: {}
+  ignore@7.0.16: {}
 
   import-meta-resolve@4.2.0: {}
 
