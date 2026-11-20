@@ -34,7 +34,7 @@ jobs:
         run: node scripts/coverage-summary.mjs
       - name: Upload coverage report
         if: matrix.node-version == 22
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: coverage/
