@@ -33,9 +33,9 @@ inputs:
     required: false
     default: "false"
   version:
-    description: surgejs-sdk version range to install
+    description: surgejs-sdk version to install
     required: false
-    default: "^1.0.0"
+    default: "1.0.0"
 
 outputs:
   urls:
