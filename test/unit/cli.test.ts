@@ -19,6 +19,9 @@ import { TempProject } from '../helpers/temp-project.js'
 const TOKEN = 'cli-token'
 const ENDPOINT = 'https://api.test'
 
+const failingFetch: typeof globalThis.fetch = () =>
+  Promise.reject(new Error('connect ECONNREFUSED'))
+
 /** Collect everything the CLI writes to stdout/stderr. */
 function capture(): {
   out: string[]
@@ -366,11 +369,9 @@ describe('surgejs CLI', () => {
   })
 
   it('maps a network failure to exit code 1', async () => {
-    const failing: typeof globalThis.fetch = () =>
-      Promise.reject(new Error('connect ECONNREFUSED'))
     const io = capture()
     try {
-      expect(await main(['list', ...global], { fetch: failing })).toBe(1)
+      expect(await main(['list', ...global], { fetch: failingFetch })).toBe(1)
       expect(io.err.join('')).toContain('error:')
     } finally {
       io.restore()
